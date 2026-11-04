@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  folders      Folder[]
+  activities   Activity[]
+  sessions     Session[]
+}
+
+/// Folder za organizaciju aktivnosti; moze se ugnjezdavati (npr. Fakultet -> MDP).
+model Folder {
+  id         Int        @id @default(autoincrement())
+  name       String
+  color      String     @default("#6366f1")
+  parentId   Int?
+  parent     Folder?    @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Folder[]   @relation("FolderTree")
+  userId     Int
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities Activity[]
+  createdAt  DateTime   @default(now())
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+/// Aktivnost/obaveza; moze imati krajnji rok i biti zakazana vise puta u planeru.
+model Activity {
+  id               Int       @id @default(autoincrement())
+  title            String
+  description      String?
+  deadline         DateTime?
+  /// 0 = nizak, 1 = srednji, 2 = visok
+  priority         Int       @default(1)
+  /// Procijenjeno vrijeme potrebno za izvrsavanje (u minutama)
+  estimatedMinutes Int?
+  completed        Boolean   @default(false)
+  completedAt      DateTime?
+  folderId         Int?
+  folder           Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions         Session[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([folderId])
+  @@index([deadline])
+}
+
+/// Termin u planeru: konkretno vrijeme kada se radi na aktivnosti.
+model Session {
+  id         Int      @id @default(autoincrement())
+  start      DateTime
+  end        DateTime
+  done       Boolean  @default(false)
+  activityId Int
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, start])
+  @@index([activityId])
+}

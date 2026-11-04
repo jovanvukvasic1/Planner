@@ -1,0 +1,15 @@
+services:
+  planner:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:../data/planner.db"
+      PORT: "3000"
+      JWT_SECRET: "${JWT_SECRET:-promijeni-me}"
+    volumes:
+      - planner-data:/app/server/data
+
+volumes:
+  planner-data:
