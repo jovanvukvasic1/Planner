@@ -1,19 +1,37 @@
-import { useEffect, useState } from "react";
+import { AuthProvider, useAuth } from "./lib/auth";
+import Login from "./components/Login";
+import ActivitiesPage from "./components/ActivitiesPage";
 
-export default function App() {
-  const [status, setStatus] = useState("provjeravam...");
+function Shell() {
+  const { user, loading, logout } = useAuth();
 
-  useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then((d) => setStatus(d.status === "ok" ? "server radi" : "greska"))
-      .catch(() => setStatus("server nije dostupan"));
-  }, []);
+  if (loading) return <div className="loading">Učitavanje...</div>;
+  if (!user) return <Login />;
 
   return (
-    <main className="app">
-      <h1>Planer</h1>
-      <p>Status: {status}</p>
-    </main>
+    <div className="shell">
+      <header className="topbar">
+        <span className="brand">Planer</span>
+        <nav className="tabs">
+          <button className="tab active">Aktivnosti</button>
+        </nav>
+        <span className="spacer" />
+        <span className="muted small user-name">{user.username}</span>
+        <button className="btn small" onClick={logout}>
+          Odjava
+        </button>
+      </header>
+      <main className="main">
+        <ActivitiesPage />
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Shell />
+    </AuthProvider>
   );
 }

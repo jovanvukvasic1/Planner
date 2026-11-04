@@ -18,7 +18,8 @@ const createSchema = baseSchema;
 const updateSchema = baseSchema.partial().extend({ completed: z.boolean().optional() });
 
 const listQuery = z.object({
-  folderId: z.coerce.number().int().optional(),
+  // broj = konkretan folder, "none" = aktivnosti bez foldera
+  folderId: z.union([z.literal("none"), z.coerce.number().int()]).optional(),
   // ukljuci i aktivnosti iz podfoldera
   recursive: z.enum(["true", "false"]).optional(),
   completed: z.enum(["true", "false"]).optional(),
@@ -54,7 +55,9 @@ async function descendantFolderIds(userId: number, rootId: number): Promise<numb
 router.get("/", async (req, res) => {
   const q = listQuery.parse(req.query);
   const where: Prisma.ActivityWhereInput = { userId: req.userId };
-  if (q.folderId !== undefined) {
+  if (q.folderId === "none") {
+    where.folderId = null;
+  } else if (q.folderId !== undefined) {
     where.folderId =
       q.recursive === "true" ? { in: await descendantFolderIds(req.userId, q.folderId) } : q.folderId;
   }

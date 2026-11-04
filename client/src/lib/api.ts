@@ -1,0 +1,87 @@
+import type { Activity, ActivityInput, Folder, FolderInput, User } from "./types";
+
+const TOKEN_KEY = "planer_token";
+
+export function getToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setToken(token: string | null) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* localStorage nedostupan */
+  }
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
+/** Poziva se kad server vrati 401 (npr. istekao token). */
+let onUnauthorized: () => void = () => {};
+export function setUnauthorizedHandler(fn: () => void) {
+  onUnauthorized = fn;
+}
+
+async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  const res = await fetch(`/api${url}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (res.status === 204) return undefined as T;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 401 && token) onUnauthorized();
+    throw new ApiError(res.status, data.error || "Greska u komunikaciji sa serverom");
+  }
+  return data as T;
+}
+
+type AuthResponse = { token: string; user: User };
+
+export const api = {
+  auth: {
+    status: () => request<{ registrationOpen: boolean }>("GET", "/auth/status"),
+    login: (username: string, password: string) =>
+      request<AuthResponse>("POST", "/auth/login", { username, password }),
+    register: (username: string, password: string) =>
+      request<AuthResponse>("POST", "/auth/register", { username, password }),
+    me: () => request<User>("GET", "/auth/me"),
+  },
+  folders: {
+    list: () => request<Folder[]>("GET", "/folders"),
+    create: (data: FolderInput) => request<Folder>("POST", "/folders", data),
+    update: (id: number, data: Partial<FolderInput>) => request<Folder>("PATCH", `/folders/${id}`, data),
+    remove: (id: number) => request<void>("DELETE", `/folders/${id}`),
+  },
+  activities: {
+    list: (params: { folderId?: number | "none"; recursive?: boolean; completed?: boolean; search?: string } = {}) => {
+      const q = new URLSearchParams();
+      if (params.folderId !== undefined) q.set("folderId", String(params.folderId));
+      if (params.recursive) q.set("recursive", "true");
+      if (params.completed !== undefined) q.set("completed", String(params.completed));
+      if (params.search) q.set("search", params.search);
+      const qs = q.toString();
+      return request<Activity[]>("GET", `/activities${qs ? `?${qs}` : ""}`);
+    },
+    upcoming: () => request<Activity[]>("GET", "/activities/upcoming"),
+    create: (data: ActivityInput) => request<Activity>("POST", "/activities", data),
+    update: (id: number, data: Partial<ActivityInput>) => request<Activity>("PATCH", `/activities/${id}`, data),
+    remove: (id: number) => request<void>("DELETE", `/activities/${id}`),
+  },
+};
