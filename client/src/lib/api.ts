@@ -1,4 +1,4 @@
-import type { Activity, ActivityInput, Folder, FolderInput, User } from "./types";
+import type { Activity, ActivityInput, Folder, FolderInput, Session, SessionInput, User } from "./types";
 
 const TOKEN_KEY = "planer_token";
 
@@ -70,12 +70,23 @@ export const api = {
     remove: (id: number) => request<void>("DELETE", `/folders/${id}`),
   },
   activities: {
-    list: (params: { folderId?: number | "none"; recursive?: boolean; completed?: boolean; search?: string } = {}) => {
+    list: (
+      params: {
+        folderId?: number | "none";
+        recursive?: boolean;
+        completed?: boolean;
+        search?: string;
+        deadlineFrom?: Date;
+        deadlineTo?: Date;
+      } = {}
+    ) => {
       const q = new URLSearchParams();
       if (params.folderId !== undefined) q.set("folderId", String(params.folderId));
       if (params.recursive) q.set("recursive", "true");
       if (params.completed !== undefined) q.set("completed", String(params.completed));
       if (params.search) q.set("search", params.search);
+      if (params.deadlineFrom) q.set("deadlineFrom", params.deadlineFrom.toISOString());
+      if (params.deadlineTo) q.set("deadlineTo", params.deadlineTo.toISOString());
       const qs = q.toString();
       return request<Activity[]>("GET", `/activities${qs ? `?${qs}` : ""}`);
     },
@@ -83,5 +94,13 @@ export const api = {
     create: (data: ActivityInput) => request<Activity>("POST", "/activities", data),
     update: (id: number, data: Partial<ActivityInput>) => request<Activity>("PATCH", `/activities/${id}`, data),
     remove: (id: number) => request<void>("DELETE", `/activities/${id}`),
+  },
+  sessions: {
+    list: (from: Date, to: Date) =>
+      request<Session[]>("GET", `/sessions?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
+    create: (data: SessionInput) => request<Session>("POST", "/sessions", data),
+    update: (id: number, data: Partial<Omit<SessionInput, "activityId">> & { done?: boolean }) =>
+      request<Session>("PATCH", `/sessions/${id}`, data),
+    remove: (id: number) => request<void>("DELETE", `/sessions/${id}`),
   },
 };

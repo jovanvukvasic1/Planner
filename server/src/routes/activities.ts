@@ -24,6 +24,9 @@ const listQuery = z.object({
   recursive: z.enum(["true", "false"]).optional(),
   completed: z.enum(["true", "false"]).optional(),
   search: z.string().optional(),
+  // aktivnosti ciji rok pada u interval [deadlineFrom, deadlineTo)
+  deadlineFrom: z.coerce.date().optional(),
+  deadlineTo: z.coerce.date().optional(),
 });
 
 const include = {
@@ -63,6 +66,9 @@ router.get("/", async (req, res) => {
   }
   if (q.completed) where.completed = q.completed === "true";
   if (q.search) where.title = { contains: q.search };
+  if (q.deadlineFrom || q.deadlineTo) {
+    where.deadline = { not: null, gte: q.deadlineFrom, lt: q.deadlineTo };
+  }
   const activities = await prisma.activity.findMany({
     where,
     include,

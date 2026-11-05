@@ -50,3 +50,25 @@ export interface FolderInput {
   color?: string;
   parentId?: number | null;
 }
+
+export interface Session {
+  id: number;
+  start: string;
+  end: string;
+  done: boolean;
+  activityId: number;
+  activity: {
+    id: number;
+    title: string;
+    deadline: string | null;
+    priority: Priority;
+    completed: boolean;
+    folder: FolderRef | null;
+  };
+}
+
+export interface SessionInput {
+  activityId: number;
+  start: string;
+  end: string;
+}

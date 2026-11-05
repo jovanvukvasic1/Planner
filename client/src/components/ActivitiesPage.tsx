@@ -6,6 +6,7 @@ import FolderTree, { type Selection } from "./FolderTree";
 import FolderForm from "./FolderForm";
 import ActivityForm from "./ActivityForm";
 import ActivityItem from "./ActivityItem";
+import Icon from "./Icon";
 
 type StatusFilter = "active" | "completed" | "all";
 
@@ -116,14 +117,14 @@ export default function ActivitiesPage() {
       <section className="content">
         <div className="content-header">
           <button className="btn mobile-only" onClick={() => setSidebarOpen(true)}>
-            ☰ Folderi
+            <Icon name="menu" /> Folderi
           </button>
           <h2>
             {selectedFolder && <span className="folder-dot large" style={{ background: selectedFolder.color }} />}
             {heading}
           </h2>
           <button className="btn primary" onClick={() => setDialog({ kind: "activity" })}>
-            + Nova aktivnost
+            <Icon name="plus" /> Nova aktivnost
           </button>
         </div>
 

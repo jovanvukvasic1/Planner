@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FolderNode } from "../lib/format";
 import type { Folder } from "../lib/types";
+import Icon from "./Icon";
 
 export type Selection = { kind: "all" } | { kind: "none" } | { kind: "folder"; id: number };
 
@@ -42,20 +43,20 @@ export default function FolderTree({ tree, selection, onSelect, onAdd, onEdit, o
             }}
             aria-label={isCollapsed ? "Proširi" : "Skupi"}
           >
-            {isCollapsed ? "▸" : "▾"}
+            <Icon name={isCollapsed ? "right" : "down"} size={14} />
           </button>
           <span className="folder-dot" style={{ background: node.color }} />
           <span className="tree-label">{node.name}</span>
           {!!node._count?.activities && <span className="tree-count">{node._count.activities}</span>}
           <span className="tree-actions" onClick={(e) => e.stopPropagation()}>
             <button className="icon-btn" title="Novi podfolder" onClick={() => onAdd(node.id)}>
-              +
+              <Icon name="plus" size={14} />
             </button>
             <button className="icon-btn" title="Izmijeni" onClick={() => onEdit(node)}>
-              ✎
+              <Icon name="edit" size={14} />
             </button>
             <button className="icon-btn" title="Obriši" onClick={() => onDelete(node)}>
-              🗑
+              <Icon name="trash" size={14} />
             </button>
           </span>
         </div>
@@ -69,14 +70,14 @@ export default function FolderTree({ tree, selection, onSelect, onAdd, onEdit, o
       <div className="tree-header">
         <span>Folderi</span>
         <button className="icon-btn" title="Novi folder" onClick={() => onAdd(null)}>
-          +
+          <Icon name="plus" />
         </button>
       </div>
       <ul>
         <li>
           <div className={`tree-item${selection.kind === "all" ? " selected" : ""}`} onClick={() => onSelect({ kind: "all" })}>
             <span className="tree-toggle invisible" />
-            <span className="tree-label">📋 Sve aktivnosti</span>
+            <span className="tree-label">Sve aktivnosti</span>
           </div>
         </li>
         {tree.map(renderNode)}

@@ -25,12 +25,12 @@ export default function ActivityItem({ activity: a, showFolder, onToggle, onOpen
         <span className="activity-meta">
           {a.deadline && (
             <span className={`badge deadline ${urgency}`} title={formatDateTime(a.deadline)}>
-              ⏰ {formatDateTime(a.deadline)}
+              Rok {formatDateTime(a.deadline)}
               {!a.completed && <> · {relativeDeadline(a.deadline)}</>}
             </span>
           )}
           {a.priority !== 1 && <span className={`badge priority-${a.priority}`}>{PRIORITY_LABELS[a.priority]} prioritet</span>}
-          {a.estimatedMinutes && <span className="badge">⏱ {formatDuration(a.estimatedMinutes)}</span>}
+          {a.estimatedMinutes && <span className="badge">{formatDuration(a.estimatedMinutes)}</span>}
           {showFolder && a.folder && (
             <span className="badge folder" style={{ borderColor: a.folder.color }}>
               <span className="folder-dot" style={{ background: a.folder.color }} />
