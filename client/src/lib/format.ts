@@ -58,6 +58,28 @@ export function formatDateTime(iso: string): string {
   return `${date} ${time}`;
 }
 
+/** Trajanje tajmera: 1:05:09 ili 05:09 */
+export function formatClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(sec).padStart(2, "0");
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+/** Ukupno odradjeno vrijeme aktivnosti u sekundama, ukljucujuci tekuci period. */
+export function liveWorkedSeconds(a: { workedSeconds: number; runningSince: string | null }, now: number): number {
+  return a.workedSeconds + (a.runningSince ? Math.max(0, (now - new Date(a.runningSince).getTime()) / 1000) : 0);
+}
+
+/** Trajanje u sekundama -> "1h 20min" (najmanje "1min" ako je bilo rada). */
+export function formatWorked(seconds: number): string {
+  if (seconds <= 0) return "0min";
+  return formatDuration(Math.max(1, Math.round(seconds / 60)));
+}
+
 export function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

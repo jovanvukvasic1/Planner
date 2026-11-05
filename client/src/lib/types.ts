@@ -17,6 +17,12 @@ export interface FolderRef {
   color: string;
 }
 
+/** "todo" = za uraditi, "in_progress" = u radu ili pauzirano, "done" = zavrseno */
+export type ActivityStatus = "todo" | "in_progress" | "done";
+
+/** Odakle dolazi vrijeme rada: izmjereno tajmerom, procijenjeno (zavrseno bez mjerenja) ili nema */
+export type TimeSource = "tracked" | "estimated" | "none";
+
 /** 0 = nizak, 1 = srednji, 2 = visok */
 export type Priority = 0 | 1 | 2;
 
@@ -27,8 +33,16 @@ export interface Activity {
   deadline: string | null;
   priority: Priority;
   estimatedMinutes: number | null;
+  status: ActivityStatus;
   completed: boolean;
   completedAt: string | null;
+  /** Izmjereno vrijeme rada u zavrsenim periodima (sekunde) */
+  workedSeconds: number;
+  /** Pocetak tekuceg perioda rada ako tajmer trenutno radi */
+  runningSince: string | null;
+  timeSource: TimeSource;
+  /** Vrijeme koje se racuna kao odradjeno (izmjereno ili procijenjeno) */
+  creditedSeconds: number;
   folderId: number | null;
   folder: FolderRef | null;
   createdAt: string;
@@ -43,6 +57,23 @@ export interface ActivityInput {
   estimatedMinutes?: number | null;
   folderId?: number | null;
   completed?: boolean;
+  status?: ActivityStatus;
+}
+
+export interface WorkLog {
+  id: number;
+  start: string;
+  end: string | null;
+}
+
+export interface ActivityDetail extends Activity {
+  workLogs: WorkLog[];
+}
+
+export interface RunningTimer {
+  id: number;
+  start: string;
+  activity: Activity;
 }
 
 export interface FolderInput {
@@ -63,6 +94,7 @@ export interface Session {
     deadline: string | null;
     priority: Priority;
     completed: boolean;
+    status: ActivityStatus;
     folder: FolderRef | null;
   };
 }

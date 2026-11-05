@@ -21,6 +21,7 @@ type Props = {
       session: Session;
       onDelete: () => Promise<void>;
       onToggleActivity: () => Promise<void>;
+      onStartWork: () => Promise<void>;
     }
 );
 
@@ -160,6 +161,11 @@ export default function SessionForm(props: Props) {
               >
                 Obriši
               </button>
+              {!props.session.activity.completed && (
+                <button type="button" className="btn" disabled={busy} onClick={() => wrap(props.onStartWork)}>
+                  Započni rad
+                </button>
+              )}
               <button type="button" className="btn" disabled={busy} onClick={() => wrap(props.onToggleActivity)}>
                 {props.session.activity.completed ? "Vrati aktivnost u nezavršene" : "Aktivnost je završena"}
               </button>

@@ -154,14 +154,15 @@ input, select, textarea { font: inherit; color: inherit; }
 .login-card p { margin: 0; }
 
 /* Okvir aplikacije */
-.shell { min-height: 100vh; display: flex; flex-direction: column; }
+.shell { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
 .topbar {
   display: flex; align-items: center; gap: 16px;
   padding: 0 16px;
   height: 52px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 20;
+  flex-shrink: 0;
+  z-index: 20;
 }
 .brand { font-weight: 700; letter-spacing: -0.01em; }
 .tabs { display: flex; gap: 2px; height: 100%; }
@@ -173,7 +174,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
-.main { flex: 1; display: flex; min-height: 0; }
+.main { flex: 1; display: flex; min-height: 0; overflow-y: auto; }
 
 .segmented { display: inline-flex; border: 1px solid var(--border-strong); border-radius: var(--radius); overflow: hidden; }
 .segmented button { border: none; background: var(--surface); padding: 6px 12px; color: var(--muted); }
@@ -258,8 +259,45 @@ input, select, textarea { font: inherit; color: inherit; }
 .badge.deadline.week { color: var(--info); }
 .badge.priority-2 { color: var(--danger); }
 
+/* Tajmer */
+.timer-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.timer-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex-shrink: 0; animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .timer-indicator { animation: none; } }
+.timer-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.timer-title { font-weight: 600; display: flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.timer-clock { font-variant-numeric: tabular-nums; font-weight: 600; }
+.timer-actions { display: flex; gap: 6px; margin-left: auto; }
+.status-text { font-weight: 600; }
+.status-text.running { color: var(--danger); }
+.status-text.paused { color: var(--warning); }
+.timer-btn { align-self: center; }
+.timer-btn.active { border-color: var(--danger); color: var(--danger); }
+.activity.running { background: color-mix(in srgb, var(--danger) 4%, var(--surface)); }
+
+/* Evidencija rada */
+.worklog { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.worklog-header { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; }
+.worklog-header .muted { font-weight: 400; }
+.worklog p { margin: 0; }
+.worklog-list { list-style: none; margin: 0; padding: 0; max-height: 180px; overflow-y: auto; font-size: 0.85rem; }
+.worklog-list li { display: grid; grid-template-columns: 1fr auto 70px 28px; gap: 8px; align-items: center; padding: 2px 0; }
+.worklog-list li + li { border-top: 1px solid var(--border); }
+.worklog-time { font-variant-numeric: tabular-nums; }
+.worklog-list .muted { text-align: right; }
+.worklog-add { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.worklog-add input { border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--radius); padding: 5px 8px; font-size: 0.85rem; min-width: 0; }
+.link-btn.small { align-self: flex-start; padding: 0; font-size: 0.85rem; }
+
 /* Planer */
-.planner-page { flex: 1; display: flex; min-width: 0; height: calc(100vh - 52px); height: calc(100dvh - 52px); }
+.planner-page { flex: 1; display: flex; min-width: 0; min-height: 0; }
 .planner-main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 14px 16px 16px; gap: 12px; }
 .planner-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .planner-nav, .planner-controls { display: flex; align-items: center; gap: 8px; }
@@ -422,6 +460,11 @@ input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 760px) {
   .topbar { padding: 0 12px; gap: 10px; }
   .user-name { display: none; }
+  .timer-bar { padding: 6px 12px; flex-wrap: wrap; row-gap: 4px; }
+  .timer-label { display: none; }
+  .timer-title { flex: 1; }
+  .timer-actions { flex-basis: 100%; }
+  .timer-actions .btn { flex: 1; justify-content: center; }
   .content { padding: 16px; }
   .mobile-only { display: inline-flex; }
   .sidebar, .planner-side {

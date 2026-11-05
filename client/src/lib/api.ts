@@ -1,4 +1,16 @@
-import type { Activity, ActivityInput, Folder, FolderInput, Session, SessionInput, User } from "./types";
+import type {
+  Activity,
+  ActivityDetail,
+  ActivityInput,
+  ActivityStatus,
+  Folder,
+  FolderInput,
+  RunningTimer,
+  Session,
+  SessionInput,
+  User,
+  WorkLog,
+} from "./types";
 
 const TOKEN_KEY = "planer_token";
 
@@ -75,6 +87,7 @@ export const api = {
         folderId?: number | "none";
         recursive?: boolean;
         completed?: boolean;
+        status?: ActivityStatus;
         search?: string;
         deadlineFrom?: Date;
         deadlineTo?: Date;
@@ -84,6 +97,7 @@ export const api = {
       if (params.folderId !== undefined) q.set("folderId", String(params.folderId));
       if (params.recursive) q.set("recursive", "true");
       if (params.completed !== undefined) q.set("completed", String(params.completed));
+      if (params.status) q.set("status", params.status);
       if (params.search) q.set("search", params.search);
       if (params.deadlineFrom) q.set("deadlineFrom", params.deadlineFrom.toISOString());
       if (params.deadlineTo) q.set("deadlineTo", params.deadlineTo.toISOString());
@@ -91,6 +105,10 @@ export const api = {
       return request<Activity[]>("GET", `/activities${qs ? `?${qs}` : ""}`);
     },
     upcoming: () => request<Activity[]>("GET", "/activities/upcoming"),
+    get: (id: number) => request<ActivityDetail>("GET", `/activities/${id}`),
+    start: (id: number) => request<Activity>("POST", `/activities/${id}/start`),
+    pause: (id: number) => request<Activity>("POST", `/activities/${id}/pause`),
+    finish: (id: number) => request<Activity>("POST", `/activities/${id}/finish`),
     create: (data: ActivityInput) => request<Activity>("POST", "/activities", data),
     update: (id: number, data: Partial<ActivityInput>) => request<Activity>("PATCH", `/activities/${id}`, data),
     remove: (id: number) => request<void>("DELETE", `/activities/${id}`),
@@ -102,5 +120,11 @@ export const api = {
     update: (id: number, data: Partial<Omit<SessionInput, "activityId">> & { done?: boolean }) =>
       request<Session>("PATCH", `/sessions/${id}`, data),
     remove: (id: number) => request<void>("DELETE", `/sessions/${id}`),
+  },
+  worklogs: {
+    current: () => request<RunningTimer | null>("GET", "/worklogs/current"),
+    create: (data: { activityId: number; start: string; end: string }) => request<WorkLog>("POST", "/worklogs", data),
+    update: (id: number, data: { start?: string; end?: string }) => request<WorkLog>("PATCH", `/worklogs/${id}`, data),
+    remove: (id: number) => request<void>("DELETE", `/worklogs/${id}`),
   },
 };

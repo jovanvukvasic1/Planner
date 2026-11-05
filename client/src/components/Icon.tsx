@@ -10,6 +10,9 @@ const PATHS = {
   check: "M5 12l5 5L20 7",
   clock: "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
   list: "M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01",
+  play: "M8 5.5v13l10.5-6.5L8 5.5z",
+  pause: "M8 5v14M16 5v14",
+  stop: "M6.5 6.5h11v11h-11z",
 } as const;
 
 export type IconName = keyof typeof PATHS;

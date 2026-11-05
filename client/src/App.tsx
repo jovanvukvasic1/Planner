@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { TimerProvider } from "./lib/timer";
+import TimerBar from "./components/TimerBar";
 import Login from "./components/Login";
 import ActivitiesPage from "./components/ActivitiesPage";
 import PlannerPage from "./components/planner/PlannerPage";
@@ -37,24 +39,27 @@ function Shell() {
   };
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <span className="brand">Planer</span>
-        <nav className="tabs">
-          {TABS.map(([t, label]) => (
-            <button key={t} className={`tab${tab === t ? " active" : ""}`} onClick={() => changeTab(t)}>
-              {label}
-            </button>
-          ))}
-        </nav>
-        <span className="spacer" />
-        <span className="muted small user-name">{user.username}</span>
-        <button className="btn small" onClick={logout}>
-          Odjava
-        </button>
-      </header>
-      <main className="main">{tab === "planner" ? <PlannerPage /> : <ActivitiesPage />}</main>
-    </div>
+    <TimerProvider>
+      <div className="shell">
+        <header className="topbar">
+          <span className="brand">Planer</span>
+          <nav className="tabs">
+            {TABS.map(([t, label]) => (
+              <button key={t} className={`tab${tab === t ? " active" : ""}`} onClick={() => changeTab(t)}>
+                {label}
+              </button>
+            ))}
+          </nav>
+          <span className="spacer" />
+          <span className="muted small user-name">{user.username}</span>
+          <button className="btn small" onClick={logout}>
+            Odjava
+          </button>
+        </header>
+        <TimerBar />
+        <main className="main">{tab === "planner" ? <PlannerPage /> : <ActivitiesPage />}</main>
+      </div>
+    </TimerProvider>
   );
 }
 

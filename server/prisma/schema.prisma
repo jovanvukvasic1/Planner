@@ -15,6 +15,7 @@ model User {
   folders      Folder[]
   activities   Activity[]
   sessions     Session[]
+  workLogs     WorkLog[]
 }
 
 /// Folder za organizaciju aktivnosti; moze se ugnjezdavati (npr. Fakultet -> MDP).
@@ -44,6 +45,8 @@ model Activity {
   priority         Int       @default(1)
   /// Procijenjeno vrijeme potrebno za izvrsavanje (u minutama)
   estimatedMinutes Int?
+  /// "todo" = za uraditi, "in_progress" = u radu (ili pauzirano), "done" = zavrseno
+  status           String    @default("todo")
   completed        Boolean   @default(false)
   completedAt      DateTime?
   folderId         Int?
@@ -51,6 +54,7 @@ model Activity {
   userId           Int
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessions         Session[]
+  workLogs         WorkLog[]
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -70,6 +74,21 @@ model Session {
   userId     Int
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
+
+  @@index([userId, start])
+  @@index([activityId])
+}
+
+/// Period stvarnog rada na aktivnosti (od starta do pauze/zavrsetka). end = null znaci da tajmer trenutno radi.
+model WorkLog {
+  id         Int       @id @default(autoincrement())
+  start      DateTime
+  end        DateTime?
+  activityId Int
+  activity   Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
 
   @@index([userId, start])
   @@index([activityId])

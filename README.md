@@ -10,6 +10,7 @@ Lični planer obaveza i aktivnosti. Serverska aplikacija dostupna s telefona i l
 - Bočni panel s aktivnostima sortiranim po roku (najhitnije prve)
 - Zakazivanje aktivnosti u planer (jedna aktivnost može imati više termina)
 - Označavanje urađenih aktivnosti i termina
+- Mjerenje vremena rada: start, pauza i završetak aktivnosti
 - Statistika
 
 ## Tehnologije
@@ -54,6 +55,20 @@ Sve rute osim `/api/auth/*` i `/api/health` traže header `Authorization: Bearer
 | GET | `/api/sessions?from=&to=` | Termini u periodu (dan/sedmica/mjesec) |
 | POST | `/api/sessions` | Zakazivanje (`activityId`, `start`, `end`) |
 | PATCH / DELETE | `/api/sessions/:id` | Pomjeranje, označavanje `done` / brisanje |
+| POST | `/api/activities/:id/start` | Pokreće tajmer (tajmer druge aktivnosti se pauzira) |
+| POST | `/api/activities/:id/pause` | Pauzira tajmer |
+| POST | `/api/activities/:id/finish` | Završava aktivnost i zaustavlja tajmer |
+| GET | `/api/worklogs/current` | Tajmer koji trenutno radi |
+| POST | `/api/worklogs` | Ručni unos perioda rada (`activityId`, `start`, `end`) |
+| PATCH / DELETE | `/api/worklogs/:id` | Ispravka / brisanje perioda rada |
+
+### Vrijeme rada
+
+Aktivnost ima status `todo` (za uraditi), `in_progress` (u radu ili pauzirano) ili `done` (završeno).
+Istovremeno može raditi samo jedan tajmer. Za vrijeme rada važi:
+
+- ako je rad mjeren tajmerom (ili ručno unesen), računa se izmjereno vrijeme;
+- ako je aktivnost završena bez mjerenja, računa se njeno procijenjeno trajanje (`timeSource: "estimated"`).
 
 ## Pokretanje (produkcija, Docker)
 

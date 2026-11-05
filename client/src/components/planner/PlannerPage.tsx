@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
+import { useTimer } from "../../lib/timer";
 import { MINUTE, nextFullHour, shiftDate, startOfDay, viewRange, viewTitle, type View } from "../../lib/dates";
 import type { Activity, Session } from "../../lib/types";
 import Icon from "../Icon";
@@ -40,6 +41,7 @@ export default function PlannerPage() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [backlogOpen, setBacklogOpen] = useState(false);
   const [error, setError] = useState("");
+  const timer = useTimer();
 
   const range = useMemo(() => viewRange(view, date), [view, date]);
 
@@ -50,9 +52,12 @@ export default function PlannerPage() {
     ]);
     setSessions(s);
     setDeadlines(d);
-  }, [range]);
+  }, [range, timer.version]);
 
-  const loadBacklog = useCallback(() => api.activities.list({ completed: false }).then(setBacklog), []);
+  const loadBacklog = useCallback(
+    () => api.activities.list({ completed: false }).then(setBacklog),
+    [timer.version]
+  );
 
   const run = useCallback(async (fn: () => Promise<unknown>) => {
     try {
@@ -230,9 +235,14 @@ export default function PlannerPage() {
             await reload();
           }}
           onToggleActivity={async () => {
-            await api.activities.update(dialog.session.activityId, { completed: !dialog.session.activity.completed });
-            await reload();
+            if (dialog.session.activity.completed) {
+              await api.activities.update(dialog.session.activityId, { completed: false });
+            } else {
+              await api.activities.finish(dialog.session.activityId);
+            }
+            timer.changed();
           }}
+          onStartWork={() => timer.start(dialog.session.activityId)}
           onClose={() => setDialog(null)}
         />
       )}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { buildFolderTree } from "../lib/format";
+import { useTimer } from "../lib/timer";
 import type { Activity, ActivityInput, Folder, FolderInput } from "../lib/types";
 import FolderTree, { type Selection } from "./FolderTree";
 import FolderForm from "./FolderForm";
@@ -24,6 +25,7 @@ export default function ActivitiesPage() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [error, setError] = useState("");
+  const timer = useTimer();
 
   const tree = useMemo(() => buildFolderTree(folders), [folders]);
   const selectedFolder = selection.kind === "folder" ? folders.find((f) => f.id === selection.id) : undefined;
@@ -40,7 +42,8 @@ export default function ActivitiesPage() {
         search: search.trim() || undefined,
       })
       .then(setActivities);
-  }, [selection, status, search]);
+    // timer.version: osvjezi listu kad se tajmer pokrene/pauzira/zavrsi (i iz gornje trake)
+  }, [selection, status, search, timer.version]);
 
   const run = useCallback(async (fn: () => Promise<unknown>) => {
     try {
@@ -88,8 +91,9 @@ export default function ActivitiesPage() {
 
   const toggleActivity = (a: Activity) =>
     run(async () => {
-      await api.activities.update(a.id, { completed: !a.completed });
-      await loadActivities();
+      if (a.completed) await api.activities.update(a.id, { completed: false });
+      else await api.activities.finish(a.id);
+      timer.changed();
     });
 
   const select = (s: Selection) => {
@@ -165,6 +169,8 @@ export default function ActivitiesPage() {
                 showFolder={selection.kind !== "folder" || a.folderId !== selection.id}
                 onToggle={() => toggleActivity(a)}
                 onOpen={() => setDialog({ kind: "activity", activity: a })}
+                onStart={() => run(() => timer.start(a.id))}
+                onPause={() => run(() => timer.pause(a.id))}
               />
             ))}
           </ul>
@@ -186,11 +192,13 @@ export default function ActivitiesPage() {
           activity={dialog.activity}
           defaultFolderId={selection.kind === "folder" ? selection.id : null}
           onSave={(data) => saveActivity(data, dialog.activity)}
+          onWorkChanged={timer.changed}
           onDelete={
             dialog.activity
               ? async () => {
                   await api.activities.remove(dialog.activity!.id);
                   await refresh();
+                  timer.changed();
                 }
               : undefined
           }

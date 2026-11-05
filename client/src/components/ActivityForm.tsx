@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import Modal from "./Modal";
+import WorkLogList from "./WorkLogList";
 import { PRIORITY_LABELS, buildFolderTree, flattenTree, fromLocalInput, toLocalInput } from "../lib/format";
 import type { Activity, ActivityInput, Folder, Priority } from "../lib/types";
 
@@ -9,12 +10,14 @@ interface Props {
   defaultFolderId?: number | null;
   onSave: (data: ActivityInput) => Promise<void>;
   onDelete?: () => Promise<void>;
+  /** Poziva se kad se promijeni evidencija rada (da lista osvjezi vrijeme). */
+  onWorkChanged?: () => void;
   onClose: () => void;
 }
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180, 240, 300, 480];
 
-export default function ActivityForm({ folders, activity, defaultFolderId = null, onSave, onDelete, onClose }: Props) {
+export default function ActivityForm({ folders, activity, defaultFolderId = null, onSave, onDelete, onWorkChanged, onClose }: Props) {
   const [title, setTitle] = useState(activity?.title ?? "");
   const [description, setDescription] = useState(activity?.description ?? "");
   const [deadline, setDeadline] = useState(toLocalInput(activity?.deadline ?? null));
@@ -112,6 +115,7 @@ export default function ActivityForm({ folders, activity, defaultFolderId = null
             </select>
           </label>
         </div>
+        {activity && <WorkLogList activityId={activity.id} onChanged={() => onWorkChanged?.()} />}
         {error && <p className="error">{error}</p>}
         <div className="form-actions">
           {onDelete && (

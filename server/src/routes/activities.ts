@@ -2,7 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
-import { notFound, parseId } from "../errors.js";
+import { HttpError, notFound, parseId } from "../errors.js";
+import { STATUSES, pauseTimer, setStatus, startTimer, summarizeWork, workLogSelect } from "../worktime.js";
 
 const router = Router();
 
@@ -15,7 +16,10 @@ const baseSchema = z.object({
   folderId: z.number().int().nullable().optional(),
 });
 const createSchema = baseSchema;
-const updateSchema = baseSchema.partial().extend({ completed: z.boolean().optional() });
+const updateSchema = baseSchema.partial().extend({
+  completed: z.boolean().optional(),
+  status: z.enum(STATUSES).optional(),
+});
 
 const listQuery = z.object({
   // broj = konkretan folder, "none" = aktivnosti bez foldera
@@ -23,6 +27,7 @@ const listQuery = z.object({
   // ukljuci i aktivnosti iz podfoldera
   recursive: z.enum(["true", "false"]).optional(),
   completed: z.enum(["true", "false"]).optional(),
+  status: z.enum(STATUSES).optional(),
   search: z.string().optional(),
   // aktivnosti ciji rok pada u interval [deadlineFrom, deadlineTo)
   deadlineFrom: z.coerce.date().optional(),
@@ -32,7 +37,13 @@ const listQuery = z.object({
 const include = {
   folder: { select: { id: true, name: true, color: true } },
   _count: { select: { sessions: true } },
+  workLogs: workLogSelect,
 } satisfies Prisma.ActivityInclude;
+
+async function loadActivity(id: number) {
+  const a = await prisma.activity.findUniqueOrThrow({ where: { id }, include });
+  return summarizeWork(a);
+}
 
 async function assertOwnFolder(userId: number, folderId: number | null | undefined) {
   if (folderId == null) return;
@@ -65,6 +76,7 @@ router.get("/", async (req, res) => {
       q.recursive === "true" ? { in: await descendantFolderIds(req.userId, q.folderId) } : q.folderId;
   }
   if (q.completed) where.completed = q.completed === "true";
+  if (q.status) where.status = q.status;
   if (q.search) where.title = { contains: q.search };
   if (q.deadlineFrom || q.deadlineTo) {
     where.deadline = { not: null, gte: q.deadlineFrom, lt: q.deadlineTo };
@@ -74,7 +86,7 @@ router.get("/", async (req, res) => {
     include,
     orderBy: [{ completed: "asc" }, { deadline: { sort: "asc", nulls: "last" } }, { priority: "desc" }],
   });
-  res.json(activities);
+  res.json(activities.map(summarizeWork));
 });
 
 /**
@@ -89,36 +101,67 @@ router.get("/upcoming", async (req, res) => {
     orderBy: [{ deadline: "asc" }, { priority: "desc" }],
     take: limit,
   });
-  res.json(activities);
+  res.json(activities.map(summarizeWork));
 });
 
 router.get("/:id", async (req, res) => {
   const activity = await prisma.activity.findFirst({
     where: { id: parseId(req.params.id), userId: req.userId },
-    include: { ...include, sessions: { orderBy: { start: "asc" } } },
+    include: {
+      ...include,
+      sessions: { orderBy: { start: "asc" } },
+      workLogs: { select: { id: true, start: true, end: true }, orderBy: { start: "desc" } },
+    },
   });
   if (!activity) throw notFound("Aktivnost");
-  res.json(activity);
+  res.json({ ...summarizeWork(activity), workLogs: activity.workLogs });
 });
 
 router.post("/", async (req, res) => {
   const data = createSchema.parse(req.body);
   await assertOwnFolder(req.userId, data.folderId);
   const activity = await prisma.activity.create({ data: { ...data, userId: req.userId }, include });
-  res.status(201).json(activity);
+  res.status(201).json(summarizeWork(activity));
 });
 
 router.patch("/:id", async (req, res) => {
   const id = parseId(req.params.id);
   const existing = await getOwnActivity(req.userId, id);
-  const data = updateSchema.parse(req.body);
+  const { completed, status, ...data } = updateSchema.parse(req.body);
   await assertOwnFolder(req.userId, data.folderId);
-  const extra: { completedAt?: Date | null } = {};
-  if (data.completed !== undefined && data.completed !== existing.completed) {
-    extra.completedAt = data.completed ? new Date() : null;
+  await prisma.activity.update({ where: { id }, data });
+
+  // "completed" je zadrzan radi jednostavnog oznacavanja (kvacica); prevodi se u status.
+  let newStatus = status;
+  if (!newStatus && completed !== undefined && completed !== existing.completed) {
+    const hasWork = (await prisma.workLog.count({ where: { activityId: id } })) > 0;
+    newStatus = completed ? "done" : hasWork ? "in_progress" : "todo";
   }
-  const activity = await prisma.activity.update({ where: { id }, data: { ...data, ...extra }, include });
-  res.json(activity);
+  if (newStatus && newStatus !== existing.status) await setStatus(id, newStatus);
+  res.json(await loadActivity(id));
+});
+
+// Tajmer: start / pauza / zavrsetak aktivnosti.
+router.post("/:id/start", async (req, res) => {
+  const id = parseId(req.params.id);
+  await getOwnActivity(req.userId, id);
+  await startTimer(req.userId, id);
+  res.json(await loadActivity(id));
+});
+
+router.post("/:id/pause", async (req, res) => {
+  const id = parseId(req.params.id);
+  const existing = await getOwnActivity(req.userId, id);
+  if (existing.status === "done") throw new HttpError(400, "Aktivnost je vec zavrsena");
+  await pauseTimer(id);
+  res.json(await loadActivity(id));
+});
+
+router.post("/:id/finish", async (req, res) => {
+  const id = parseId(req.params.id);
+  await getOwnActivity(req.userId, id);
+  await setStatus(id, "done");
+  res.json(await loadActivity(id));
 });
 
 router.delete("/:id", async (req, res) => {

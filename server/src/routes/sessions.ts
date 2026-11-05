@@ -28,6 +28,7 @@ const include = {
       deadline: true,
       priority: true,
       completed: true,
+      status: true,
       folder: { select: { id: true, name: true, color: true } },
     },
   },
