@@ -74,10 +74,11 @@ export function liveWorkedSeconds(a: { workedSeconds: number; runningSince: stri
   return a.workedSeconds + (a.runningSince ? Math.max(0, (now - new Date(a.runningSince).getTime()) / 1000) : 0);
 }
 
-/** Trajanje u sekundama -> "1h 20min" (najmanje "1min" ako je bilo rada). */
+/** Trajanje u sekundama -> "1h 20min"; ispod minute "<1min". */
 export function formatWorked(seconds: number): string {
   if (seconds <= 0) return "0min";
-  return formatDuration(Math.max(1, Math.round(seconds / 60)));
+  if (seconds < 60) return "<1min";
+  return formatDuration(Math.round(seconds / 60));
 }
 
 export function formatDuration(minutes: number): string {

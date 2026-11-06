@@ -451,6 +451,61 @@ input, select, textarea { font: inherit; color: inherit; }
 .priority-text { color: var(--danger); }
 .backlog-hint { padding: 10px 14px; margin: 0; border-top: 1px solid var(--border); }
 
+/* Tabla (kanban) */
+.board-page { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 16px; gap: 12px; }
+.board-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.board-toolbar h2 { font-size: 1.1rem; margin-right: 6px; }
+.board-toolbar .search { flex: 1; min-width: 160px; max-width: 360px; }
+.board-filter {
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
+  border-radius: var(--radius); padding: 7px 9px; font-size: 0.9rem; max-width: 220px;
+}
+.board-toolbar .btn.primary { margin-left: auto; }
+.board {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.board-col {
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.board-col.drop { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.board-col-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px; }
+.board-col-header h3 { font-size: 0.9rem; }
+.board-col-header::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.col-in_progress .board-col-header::before { background: var(--danger); }
+.col-done .board-col-header::before { background: var(--success); }
+.board-count { color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.board-cards { flex: 1; overflow-y: auto; padding: 0 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+.board-empty { margin: 4px 4px 0; }
+.board-more { align-self: center; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+  cursor: grab;
+}
+.card:active { cursor: grabbing; }
+.card.dragging { opacity: 0.4; }
+.card.urgency-overdue { border-left-color: var(--danger); }
+.card.urgency-today, .card.urgency-soon { border-left-color: var(--warning); }
+.card.urgency-week { border-left-color: var(--info); }
+.card.running { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); border-left-color: var(--danger); }
+.card.done .card-title { text-decoration: line-through; color: var(--muted); }
+.card-body { border: none; background: none; text-align: left; padding: 10px 12px 6px; display: flex; flex-direction: column; gap: 4px; cursor: inherit; }
+.card-folder { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+.card-title { font-weight: 500; overflow-wrap: anywhere; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 0.78rem; color: var(--muted); }
+.card-time { font-variant-numeric: tabular-nums; }
+.card-actions { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
+.card-actions .btn.small { padding: 3px 8px; font-size: 0.8rem; }
+
 /* Tablet */
 @media (max-width: 1100px) {
   .planner-side { width: 250px; }
@@ -458,7 +513,9 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* Telefon */
 @media (max-width: 760px) {
-  .topbar { padding: 0 12px; gap: 10px; }
+  .topbar { padding: 0 8px 0 4px; gap: 6px; }
+  .brand { display: none; }
+  .tab { padding: 0 10px; }
   .user-name { display: none; }
   .timer-bar { padding: 6px 12px; flex-wrap: wrap; row-gap: 4px; }
   .timer-label { display: none; }
@@ -495,6 +552,17 @@ input, select, textarea { font: inherit; color: inherit; }
   .tg-hour { font-size: 0.62rem; right: 3px; }
   .tg-session { font-size: 0.7rem; padding: 2px 4px; }
   .tg-session-time { display: none; }
+  .board-page { padding: 10px; }
+  .board-toolbar h2 { display: none; }
+  .board-filter { flex: 1; max-width: none; }
+  .board-toolbar .search { flex-basis: 100%; max-width: none; order: 5; }
+  .board {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+  }
+  .board-col { flex: 0 0 85%; scroll-snap-align: center; }
   .mg-day { min-height: 64px; padding: 2px; }
   .mg-session { font-size: 0.65rem; padding: 0 3px; }
   .mg-time { display: none; }

@@ -5,18 +5,21 @@ import TimerBar from "./components/TimerBar";
 import Login from "./components/Login";
 import ActivitiesPage from "./components/ActivitiesPage";
 import PlannerPage from "./components/planner/PlannerPage";
+import BoardPage from "./components/board/BoardPage";
 
-type Tab = "planner" | "activities";
+type Tab = "planner" | "board" | "activities";
 const TAB_KEY = "planer_tab";
 
 const TABS: [Tab, string][] = [
   ["planner", "Kalendar"],
+  ["board", "Tabla"],
   ["activities", "Aktivnosti"],
 ];
 
 function initialTab(): Tab {
   try {
-    return localStorage.getItem(TAB_KEY) === "activities" ? "activities" : "planner";
+    const saved = localStorage.getItem(TAB_KEY);
+    return saved === "activities" || saved === "board" ? saved : "planner";
   } catch {
     return "planner";
   }
@@ -57,7 +60,11 @@ function Shell() {
           </button>
         </header>
         <TimerBar />
-        <main className="main">{tab === "planner" ? <PlannerPage /> : <ActivitiesPage />}</main>
+        <main className="main">
+          {tab === "planner" && <PlannerPage />}
+          {tab === "board" && <BoardPage />}
+          {tab === "activities" && <ActivitiesPage />}
+        </main>
       </div>
     </TimerProvider>
   );

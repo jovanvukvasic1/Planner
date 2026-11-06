@@ -11,6 +11,7 @@ Lični planer obaveza i aktivnosti. Serverska aplikacija dostupna s telefona i l
 - Zakazivanje aktivnosti u planer (jedna aktivnost može imati više termina)
 - Označavanje urađenih aktivnosti i termina
 - Mjerenje vremena rada: start, pauza i završetak aktivnosti
+- Tabla (Za uraditi / U radu / Završeno): prevlačenje u "U radu" pokreće, a u "Završeno" završava rad
 - Statistika
 
 ## Tehnologije
