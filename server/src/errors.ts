@@ -18,6 +18,15 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     res.status(err.status).json({ error: err.message });
     return;
   }
+  // Greske pri citanju tijela zahtjeva (npr. prevelik fajl, neispravan JSON)
+  if (err?.type === "entity.too.large") {
+    res.status(413).json({ error: "Fajl je prevelik (najvise 10 MB)" });
+    return;
+  }
+  if (typeof err?.status === "number" && err.status >= 400 && err.status < 500) {
+    res.status(err.status).json({ error: "Neispravan zahtjev" });
+    return;
+  }
   console.error(err);
   res.status(500).json({ error: "Greska na serveru" });
 };

@@ -47,12 +47,14 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
   const headers: Record<string, string> = {};
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  // Blob (npr. slika) se salje kakav jeste, sve ostalo kao JSON.
+  const isBlob = body instanceof Blob;
+  if (body !== undefined) headers["Content-Type"] = isBlob ? body.type : "application/json";
 
   const res = await fetch(`/api${url}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isBlob ? body : JSON.stringify(body),
   });
 
   if (res.status === 204) return undefined as T;
@@ -109,6 +111,8 @@ export const api = {
     start: (id: number) => request<Activity>("POST", `/activities/${id}/start`),
     pause: (id: number) => request<Activity>("POST", `/activities/${id}/pause`),
     finish: (id: number) => request<Activity>("POST", `/activities/${id}/finish`),
+    setCover: (id: number, image: Blob) => request<Activity>("PUT", `/activities/${id}/cover`, image),
+    removeCover: (id: number) => request<Activity>("DELETE", `/activities/${id}/cover`),
     create: (data: ActivityInput) => request<Activity>("POST", "/activities", data),
     update: (id: number, data: Partial<ActivityInput>) => request<Activity>("PATCH", `/activities/${id}`, data),
     remove: (id: number) => request<void>("DELETE", `/activities/${id}`),

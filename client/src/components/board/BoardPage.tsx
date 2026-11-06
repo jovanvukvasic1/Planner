@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { buildFolderTree, descendantIds, flattenTree } from "../../lib/format";
 import { useTimer } from "../../lib/timer";
+import { saveActivity as persistActivity, type CoverChange } from "../../lib/activities";
 import type { Activity, ActivityInput, ActivityStatus, Folder } from "../../lib/types";
 import ActivityForm from "../ActivityForm";
 import Icon from "../Icon";
@@ -99,9 +100,8 @@ export default function BoardPage() {
       }
     });
 
-  const saveActivity = async (data: ActivityInput, activity?: Activity) => {
-    if (activity) await api.activities.update(activity.id, data);
-    else await api.activities.create(data);
+  const saveActivity = async (data: ActivityInput, cover: CoverChange, activity?: Activity) => {
+    await persistActivity(data, cover, activity);
     timer.changed();
   };
 
@@ -186,7 +186,7 @@ export default function BoardPage() {
           folders={folders}
           activity={dialog.activity}
           defaultFolderId={folderId}
-          onSave={(data) => saveActivity(data, dialog.activity)}
+          onSave={(data, cover) => saveActivity(data, cover, dialog.activity)}
           onDelete={
             dialog.activity
               ? async () => {

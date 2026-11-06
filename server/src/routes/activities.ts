@@ -1,8 +1,9 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { HttpError, notFound, parseId } from "../errors.js";
+import { IMAGE_TYPES, MAX_IMAGE_BYTES, removeImage, saveImage } from "../uploads.js";
 import { STATUSES, pauseTimer, setStatus, startTimer, summarizeWork, workLogSelect } from "../worktime.js";
 
 const router = Router();
@@ -164,10 +165,33 @@ router.post("/:id/finish", async (req, res) => {
   res.json(await loadActivity(id));
 });
 
+// Naslovna slika: tijelo zahtjeva je sama slika (image/jpeg, image/png ili image/webp).
+router.put(
+  "/:id/cover",
+  express.raw({ type: IMAGE_TYPES, limit: MAX_IMAGE_BYTES }),
+  async (req, res) => {
+    const id = parseId(req.params.id);
+    const existing = await getOwnActivity(req.userId, id);
+    const name = await saveImage(req.body);
+    await prisma.activity.update({ where: { id }, data: { coverImage: name } });
+    await removeImage(existing.coverImage);
+    res.json(await loadActivity(id));
+  }
+);
+
+router.delete("/:id/cover", async (req, res) => {
+  const id = parseId(req.params.id);
+  const existing = await getOwnActivity(req.userId, id);
+  await prisma.activity.update({ where: { id }, data: { coverImage: null } });
+  await removeImage(existing.coverImage);
+  res.json(await loadActivity(id));
+});
+
 router.delete("/:id", async (req, res) => {
   const id = parseId(req.params.id);
-  await getOwnActivity(req.userId, id);
+  const existing = await getOwnActivity(req.userId, id);
   await prisma.activity.delete({ where: { id } });
+  await removeImage(existing.coverImage);
   res.status(204).end();
 });
 

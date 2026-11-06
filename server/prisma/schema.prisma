@@ -45,6 +45,8 @@ model Activity {
   priority         Int       @default(1)
   /// Procijenjeno vrijeme potrebno za izvrsavanje (u minutama)
   estimatedMinutes Int?
+  /// Naziv fajla naslovne slike (u UPLOAD_DIR), ako postoji
+  coverImage       String?
   /// "todo" = za uraditi, "in_progress" = u radu (ili pauzirano), "done" = zavrseno
   status           String    @default("todo")
   completed        Boolean   @default(false)

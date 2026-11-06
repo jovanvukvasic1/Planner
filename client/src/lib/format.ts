@@ -2,6 +2,11 @@ import type { Folder, Priority } from "./types";
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** URL naslovne slike aktivnosti. */
+export function coverUrl(name: string): string {
+  return `/uploads/${encodeURIComponent(name)}`;
+}
+
 export const PRIORITY_LABELS: Record<Priority, string> = {
   0: "Nizak",
   1: "Srednji",

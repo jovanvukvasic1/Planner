@@ -506,6 +506,22 @@ input, select, textarea { font: inherit; color: inherit; }
 .card-actions { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
 .card-actions .btn.small { padding: 3px 8px; font-size: 0.8rem; }
 
+/* Naslovna slika */
+.cover-picker { margin-bottom: 2px; }
+.cover-empty {
+  width: 100%; padding: 14px;
+  border: 1px dashed var(--border-strong); border-radius: var(--radius);
+  background: transparent; color: var(--muted); font-size: 0.9rem;
+}
+.cover-empty:hover { background: var(--surface-2); color: var(--text); }
+.cover-preview { position: relative; border-radius: var(--radius); overflow: hidden; background: var(--surface-2); }
+.cover-preview img { display: block; width: 100%; max-height: 220px; object-fit: cover; }
+.cover-preview-actions { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 6px; }
+.cover-preview-actions .btn { background: var(--surface); }
+.card-cover { border: none; padding: 0; background: var(--surface-2); display: block; border-radius: 5px 5px 0 0; overflow: hidden; cursor: inherit; }
+.card-cover img { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 150px; object-fit: cover; }
+.activity-thumb { width: 64px; height: 44px; object-fit: cover; border-radius: 4px; align-self: center; cursor: pointer; flex-shrink: 0; background: var(--surface-2); }
+
 /* Tablet */
 @media (max-width: 1100px) {
   .planner-side { width: 250px; }

@@ -33,6 +33,8 @@ export interface Activity {
   deadline: string | null;
   priority: Priority;
   estimatedMinutes: number | null;
+  /** Naziv fajla naslovne slike (vidi coverUrl) */
+  coverImage: string | null;
   status: ActivityStatus;
   completed: boolean;
   completedAt: string | null;

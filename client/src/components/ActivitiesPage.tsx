@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { buildFolderTree } from "../lib/format";
 import { useTimer } from "../lib/timer";
+import { saveActivity as persistActivity, type CoverChange } from "../lib/activities";
 import type { Activity, ActivityInput, Folder, FolderInput } from "../lib/types";
 import FolderTree, { type Selection } from "./FolderTree";
 import FolderForm from "./FolderForm";
@@ -83,9 +84,8 @@ export default function ActivitiesPage() {
       await refresh();
     });
 
-  const saveActivity = async (data: ActivityInput, activity?: Activity) => {
-    if (activity) await api.activities.update(activity.id, data);
-    else await api.activities.create(data);
+  const saveActivity = async (data: ActivityInput, cover: CoverChange, activity?: Activity) => {
+    await persistActivity(data, cover, activity);
     await refresh();
   };
 
@@ -191,7 +191,7 @@ export default function ActivitiesPage() {
           folders={folders}
           activity={dialog.activity}
           defaultFolderId={selection.kind === "folder" ? selection.id : null}
-          onSave={(data) => saveActivity(data, dialog.activity)}
+          onSave={(data, cover) => saveActivity(data, cover, dialog.activity)}
           onWorkChanged={timer.changed}
           onDelete={
             dialog.activity

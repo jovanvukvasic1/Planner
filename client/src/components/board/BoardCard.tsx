@@ -1,5 +1,6 @@
 import {
   PRIORITY_LABELS,
+  coverUrl,
   deadlineUrgency,
   formatClock,
   formatDuration,
@@ -44,6 +45,11 @@ export default function BoardCard({ activity: a, showFolder, onOpen, onMove, onS
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove("dragging")}
     >
+      {a.coverImage && (
+        <button className="card-cover" onClick={onOpen} tabIndex={-1} aria-hidden="true">
+          <img src={coverUrl(a.coverImage)} alt="" loading="lazy" draggable={false} />
+        </button>
+      )}
       <button className="card-body" onClick={onOpen}>
         {showFolder && a.folder && (
           <span className="card-folder">

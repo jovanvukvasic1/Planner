@@ -6,6 +6,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { requireAuth } from "./auth.js";
 import { errorHandler } from "./errors.js";
+import { UPLOAD_DIR } from "./uploads.js";
 import authRoutes from "./routes/auth.js";
 import folderRoutes from "./routes/folders.js";
 import activityRoutes from "./routes/activities.js";
@@ -32,6 +33,17 @@ app.use("/api/activities", requireAuth, activityRoutes);
 app.use("/api/sessions", requireAuth, sessionRoutes);
 app.use("/api/worklogs", requireAuth, workLogRoutes);
 
+// Slike aktivnosti. Imena fajlova su nasumicna (128 bita) i mijenjaju se pri svakoj
+// zamjeni slike, pa se mogu kesirati bez ogranicenja.
+app.use(
+  "/uploads",
+  express.static(UPLOAD_DIR, {
+    immutable: true,
+    maxAge: "365d",
+    setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff"),
+  })
+);
+
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "Nepostojeca ruta" });
 });
@@ -41,7 +53,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDist = path.resolve(__dirname, "../../client/dist");
 if (fs.existsSync(clientDist)) {
   app.use(express.static(clientDist));
-  app.get(/^\/(?!api\/).*/, (_req, res) => {
+  app.get(/^\/(?!api\/|uploads\/).*/, (_req, res) => {
     res.sendFile(path.join(clientDist, "index.html"));
   });
 }

@@ -11,6 +11,7 @@ Lični planer obaveza i aktivnosti. Serverska aplikacija dostupna s telefona i l
 - Zakazivanje aktivnosti u planer (jedna aktivnost može imati više termina)
 - Označavanje urađenih aktivnosti i termina
 - Mjerenje vremena rada: start, pauza i završetak aktivnosti
+- Naslovna fotografija aktivnosti (automatski se smanjuje prije slanja)
 - Tabla (Za uraditi / U radu / Završeno): prevlačenje u "U radu" pokreće, a u "Završeno" završava rad
 - Statistika
 
@@ -62,6 +63,8 @@ Sve rute osim `/api/auth/*` i `/api/health` traže header `Authorization: Bearer
 | GET | `/api/worklogs/current` | Tajmer koji trenutno radi |
 | POST | `/api/worklogs` | Ručni unos perioda rada (`activityId`, `start`, `end`) |
 | PATCH / DELETE | `/api/worklogs/:id` | Ispravka / brisanje perioda rada |
+| PUT | `/api/activities/:id/cover` | Naslovna slika (tijelo je slika: `image/jpeg`, `image/png` ili `image/webp`, do 10 MB) |
+| DELETE | `/api/activities/:id/cover` | Uklanjanje naslovne slike |
 
 ### Vrijeme rada
 
@@ -77,4 +80,4 @@ Istovremeno može raditi samo jedan tajmer. Za vrijeme rada važi:
 JWT_SECRET="neki-dug-tajni-kljuc" docker compose up -d --build
 ```
 
-Aplikacija je dostupna na portu `3000`. Baza se čuva u Docker volumenu `planner-data`.
+Aplikacija je dostupna na portu `3000`. Baza i slike (`server/data/uploads`, ili `UPLOAD_DIR`) se čuvaju u Docker volumenu `planner-data`.

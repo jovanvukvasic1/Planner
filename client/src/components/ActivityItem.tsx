@@ -1,4 +1,4 @@
-import { PRIORITY_LABELS, deadlineUrgency, formatClock, formatDateTime, formatDuration, formatWorked, liveWorkedSeconds, relativeDeadline } from "../lib/format";
+import { PRIORITY_LABELS, coverUrl, deadlineUrgency, formatClock, formatDateTime, formatDuration, formatWorked, liveWorkedSeconds, relativeDeadline } from "../lib/format";
 import { useNow } from "../lib/useNow";
 import type { Activity } from "../lib/types";
 import Icon from "./Icon";
@@ -60,6 +60,7 @@ export default function ActivityItem({ activity: a, showFolder, onToggle, onOpen
           )}
         </span>
       </button>
+      {a.coverImage && <img className="activity-thumb" src={coverUrl(a.coverImage)} alt="" loading="lazy" onClick={onOpen} />}
       {!a.completed && (
         <button
           className={`icon-btn bordered timer-btn${running ? " active" : ""}`}

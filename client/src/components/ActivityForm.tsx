@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import Modal from "./Modal";
 import WorkLogList from "./WorkLogList";
+import CoverPicker from "./CoverPicker";
+import type { CoverChange } from "../lib/activities";
 import { PRIORITY_LABELS, buildFolderTree, flattenTree, fromLocalInput, toLocalInput } from "../lib/format";
 import type { Activity, ActivityInput, Folder, Priority } from "../lib/types";
 
@@ -8,7 +10,7 @@ interface Props {
   folders: Folder[];
   activity?: Activity;
   defaultFolderId?: number | null;
-  onSave: (data: ActivityInput) => Promise<void>;
+  onSave: (data: ActivityInput, cover: CoverChange) => Promise<unknown>;
   onDelete?: () => Promise<void>;
   /** Poziva se kad se promijeni evidencija rada (da lista osvjezi vrijeme). */
   onWorkChanged?: () => void;
@@ -24,6 +26,7 @@ export default function ActivityForm({ folders, activity, defaultFolderId = null
   const [priority, setPriority] = useState<Priority>(activity?.priority ?? 1);
   const [estimated, setEstimated] = useState<number | null>(activity?.estimatedMinutes ?? null);
   const [folderId, setFolderId] = useState<number | null>(activity ? activity.folderId : defaultFolderId);
+  const [cover, setCover] = useState<CoverChange>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -34,14 +37,15 @@ export default function ActivityForm({ folders, activity, defaultFolderId = null
     setBusy(true);
     setError("");
     try {
-      await onSave({
+      const data = {
         title: title.trim(),
         description: description.trim() || null,
         deadline: fromLocalInput(deadline),
         priority,
         estimatedMinutes: estimated,
         folderId,
-      });
+      };
+      await onSave(data, cover);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Greska");
@@ -64,6 +68,7 @@ export default function ActivityForm({ folders, activity, defaultFolderId = null
   return (
     <Modal title={activity ? "Izmjena aktivnosti" : "Nova aktivnost"} onClose={onClose}>
       <form className="form" onSubmit={submit}>
+        <CoverPicker current={activity?.coverImage ?? null} change={cover} onChange={setCover} onError={setError} />
         <label>
           Naziv
           <input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={200} autoFocus placeholder="npr. Projektni zadatak" />
