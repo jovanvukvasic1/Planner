@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, getToken, setToken, setUnauthorizedHandler } from "./api";
+import { ApiError, api, getToken, setToken, setUnauthorizedHandler } from "./api";
 import type { User } from "./types";
 
 interface AuthState {
@@ -30,7 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.auth
       .me()
       .then(setUser)
-      .catch(() => setToken(null))
+      .catch((err) => {
+        // Token brisemo samo ako ga server odbije (ne kad nema mreze).
+        if (err instanceof ApiError && err.status === 401) setToken(null);
+      })
       .finally(() => setLoading(false));
   }, [logout]);
 

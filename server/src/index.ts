@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { requireAuth } from "./auth.js";
 import { errorHandler } from "./errors.js";
 import { UPLOAD_DIR } from "./uploads.js";
+import { rateLimit, securityHeaders } from "./security.js";
 import authRoutes from "./routes/auth.js";
 import folderRoutes from "./routes/folders.js";
 import activityRoutes from "./routes/activities.js";
@@ -14,20 +15,32 @@ import sessionRoutes from "./routes/sessions.js";
 import workLogRoutes from "./routes/worklogs.js";
 import statsRoutes from "./routes/stats.js";
 
-if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process.env.JWT_SECRET === "promijeni-me")) {
-  console.warn("UPOZORENJE: postavi JWT_SECRET na dug, tajan kljuc!");
+const isProduction = process.env.NODE_ENV === "production";
+const secret = process.env.JWT_SECRET;
+if (!secret || secret === "promijeni-me" || secret.length < 32) {
+  if (isProduction) {
+    console.error("GRESKA: JWT_SECRET mora biti postavljen na nasumican kljuc od najmanje 32 znaka (npr. openssl rand -hex 32).");
+    process.exit(1);
+  }
+  console.warn("UPOZORENJE: JWT_SECRET nije postavljen na siguran kljuc (dozvoljeno samo u razvoju).");
 }
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(cors());
+// Iza reverse proxyja (Caddy) prava IP adresa klijenta stize u X-Forwarded-For.
+app.set("trust proxy", Number(process.env.TRUST_PROXY ?? (isProduction ? 1 : 0)));
+app.disable("x-powered-by");
+app.use(securityHeaders);
+// U produkciji frontend i API su na istoj adresi, pa CORS treba samo u razvoju.
+if (!isProduction) app.use(cors());
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
+app.use(["/api/auth/login", "/api/auth/register"], rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
 app.use("/api/auth", authRoutes);
 app.use("/api/folders", requireAuth, folderRoutes);
 app.use("/api/activities", requireAuth, activityRoutes);
@@ -54,7 +67,9 @@ app.use("/api", (_req, res) => {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDist = path.resolve(__dirname, "../../client/dist");
 if (fs.existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+  // Fajlovi s hash-om u imenu (/assets) se nikad ne mijenjaju; ostalo (index.html, sw.js) se uvijek provjerava.
+  app.use("/assets", express.static(path.join(clientDist, "assets"), { immutable: true, maxAge: "365d" }));
+  app.use(express.static(clientDist, { maxAge: 0 }));
   app.get(/^\/(?!api\/|uploads\/).*/, (_req, res) => {
     res.sendFile(path.join(clientDist, "index.html"));
   });
@@ -62,6 +77,14 @@ if (fs.existsSync(clientDist)) {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Planner server radi na http://localhost:${PORT}`);
 });
+
+// Uredno gasenje (npr. docker compose stop / restart servera).
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.on(signal, () => {
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 3000).unref();
+  });
+}

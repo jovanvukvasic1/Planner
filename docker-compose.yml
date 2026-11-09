@@ -1,15 +1,40 @@
+# Produkcija: aplikacija iza Caddy reverse proxyja s automatskim HTTPS certifikatom.
+# Prije pokretanja napravi .env (vidi .env.example) i pokreni: docker compose up -d --build
 services:
   planner:
     build: .
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
+      NODE_ENV: production
       DATABASE_URL: "file:../data/planner.db"
       PORT: "3000"
-      JWT_SECRET: "${JWT_SECRET:-promijeni-me}"
+      JWT_SECRET: "${JWT_SECRET:?Postavi JWT_SECRET u .env fajlu}"
+      ALLOW_REGISTRATION: "${ALLOW_REGISTRATION:-false}"
     volumes:
       - planner-data:/app/server/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - planner
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: "${DOMAIN:?Postavi DOMAIN u .env fajlu}"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
 
 volumes:
   planner-data:
+  caddy-data:
+  caddy-config:

@@ -13,13 +13,14 @@ Lični planer obaveza i aktivnosti. Serverska aplikacija dostupna s telefona i l
 - Mjerenje vremena rada: start, pauza i završetak aktivnosti
 - Naslovna fotografija aktivnosti (automatski se smanjuje prije slanja)
 - Tabla (Za uraditi / U radu / Završeno): prevlačenje u "U radu" pokreće, a u "Završeno" završava rad
+- Instalacija na telefon kao aplikacija (PWA)
 - Statistika: vrijeme rada (izmjereno i procijenjeno), završene aktivnosti, rokovi, raspodjela po folderima, planirano u odnosu na odrađeno
 
 ## Tehnologije
 
 - **Backend:** Node.js, Express, Prisma, SQLite
 - **Frontend:** React, Vite, TypeScript
-- **Deploy:** Docker
+- **Deploy:** Docker, Caddy (automatski HTTPS)
 
 ## Pokretanje (razvoj)
 
@@ -31,6 +32,61 @@ npm run dev
 ```
 
 Frontend: http://localhost:5173, API: http://localhost:3000/api
+
+## Prijava
+
+Prvi korisnik koji se registruje postaje vlasnik planera, a nakon toga se registracija zatvara.
+Da bi bila otvorena za sve, postavi `ALLOW_REGISTRATION=true`.
+
+## API
+
+Sve rute osim `/api/auth/*` i `/api/health` traže header `Authorization: Bearer <token>`.
+
+| Metoda | Ruta | Opis |
+| --- | --- | --- |
+| GET | `/api/auth/status` | Da li je registracija otvorena |
+| POST | `/api/auth/register` | Registracija (`username`, `password`) |
+| POST | `/api/auth/login` | Prijava, vraća token |
+| GET | `/api/auth/me` | Trenutni korisnik |
+| GET / POST | `/api/folders` | Lista / kreiranje foldera (`name`, `color`, `parentId`) |
+| PATCH / DELETE | `/api/folders/:id` | Izmjena / brisanje foldera |
+| GET | `/api/activities` | Lista aktivnosti (`?folderId=&recursive=true&completed=&search=`) |
+| GET | `/api/activities/upcoming` | Nezavršene aktivnosti s rokom, najhitnije prve |
+| GET | `/api/activities/:id` | Detalji aktivnosti s terminima |
+| POST | `/api/activities` | Nova aktivnost (`title`, `description`, `deadline`, `priority` 0–2, `estimatedMinutes`, `folderId`) |
+| PATCH / DELETE | `/api/activities/:id` | Izmjena (i `completed`) / brisanje |
+| GET | `/api/sessions?from=&to=` | Termini u periodu (dan/sedmica/mjesec) |
+| POST | `/api/sessions` | Zakazivanje (`activityId`, `start`, `end`) |
+| PATCH / DELETE | `/api/sessions/:id` | Pomjeranje, označavanje `done` / brisanje |
+| POST | `/api/activities/:id/start` | Pokreće tajmer (tajmer druge aktivnosti se pauzira) |
+| POST | `/api/activities/:id/pause` | Pauzira tajmer |
+| POST | `/api/activities/:id/finish` | Završava aktivnost i zaustavlja tajmer |
+| GET | `/api/worklogs/current` | Tajmer koji trenutno radi |
+| POST | `/api/worklogs` | Ručni unos perioda rada (`activityId`, `start`, `end`) |
+| PATCH / DELETE | `/api/worklogs/:id` | Ispravka / brisanje perioda rada |
+| PUT | `/api/activities/:id/cover` | Naslovna slika (tijelo je slika: `image/jpeg`, `image/png` ili `image/webp`, do 10 MB) |
+| DELETE | `/api/activities/:id/cover` | Uklanjanje naslovne slike |
+| GET | `/api/stats?from=&to=` | Podaci za statistiku u periodu (agregacija se radi u browseru, po lokalnom vremenu) |
+
+### Vrijeme rada
+
+Aktivnost ima status `todo` (za uraditi), `in_progress` (u radu ili pauzirano) ili `done` (završeno).
+Istovremeno može raditi samo jedan tajmer. Za vrijeme rada važi:
+
+- ako je rad mjeren tajmerom (ili ručno unesen), računa se izmjereno vrijeme;
+- ako je aktivnost završena bez mjerenja, računa se njeno procijenjeno trajanje (`timeSource: "estimated"`).
+
+## Postavljanje na server
+
+Detaljno uputstvo za besplatno postavljanje (besplatan virtualni server, besplatan domen,
+automatski HTTPS, backup) je u **[DEPLOY.md](DEPLOY.md)**. Ukratko:
+
+```bash
+cp .env.example .env   # postavi DOMAIN i JWT_SECRET
+docker compose up -d --build
+```
+
+Aplikacija se na telefonu može instalirati kao PWA ("Dodaj na početni ekran").
 
 ## Prijava
 

@@ -1,0 +1,5 @@
+# Caddy automatski pribavlja i obnavlja HTTPS certifikat (Let's Encrypt) za DOMAIN.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy planner:3000
+}

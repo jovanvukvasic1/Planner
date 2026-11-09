@@ -18,4 +18,5 @@ COPY --from=build /app/server ./server
 COPY --from=build /app/client/dist ./client/dist
 WORKDIR /app/server
 EXPOSE 3000
-CMD ["npm", "start"]
+# Migracije baze pa server; exec da bi server direktno primao signale (brzo i cisto gasenje).
+CMD ["sh", "-c", "../node_modules/.bin/prisma migrate deploy && exec node dist/index.js"]
