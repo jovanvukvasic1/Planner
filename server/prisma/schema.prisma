@@ -95,3 +95,13 @@ model WorkLog {
   @@index([userId, start])
   @@index([activityId])
 }
+
+/// Slika (npr. naslovna slika aktivnosti). Cuva se u bazi da serveru ne treba trajni disk.
+/// id je nasumican (128 bita) i dio je javnog URL-a slike.
+model Image {
+  id        String   @id
+  mime      String
+  data      Bytes
+  size      Int
+  createdAt DateTime @default(now())
+}

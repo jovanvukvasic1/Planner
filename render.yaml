@@ -1,0 +1,27 @@
+# Render Blueprint: besplatni web servis za planer (podaci u Turso bazi).
+# Uputstvo: DEPLOY-RENDER.md
+services:
+  - type: web
+    name: planer
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: cd server && node dist/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Turso: libsql://<baza>-<korisnik>.turso.io (unosi se pri kreiranju)
+      - key: DATABASE_URL
+        sync: false
+      # Turso token baze (unosi se pri kreiranju)
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
+      # Render sam generise nasumican tajni kljuc
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOW_REGISTRATION
+        value: "false"

@@ -1,18 +1,11 @@
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import { mkdirSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { prisma } from "./db.js";
 import { HttpError } from "./errors.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-/** Folder za slike; podrazumijevano server/data/uploads (pored baze, isti Docker volumen). */
-export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, "../data/uploads"));
-mkdirSync(UPLOAD_DIR, { recursive: true });
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const FORMATS: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
 
 /** Prepoznaje format slike po prvim bajtovima (ne vjerujemo samo Content-Type zaglavlju). */
 function detectExtension(buf: Buffer): string | null {
@@ -22,17 +15,25 @@ function detectExtension(buf: Buffer): string | null {
   return null;
 }
 
-/** Cuva sliku pod nasumicnim imenom i vraca naziv fajla. */
+/** Cuva sliku u bazi pod nasumicnim imenom i vraca naziv (npr. "3f2a...c1.jpg"). */
 export async function saveImage(buf: unknown): Promise<string> {
   if (!Buffer.isBuffer(buf) || buf.length === 0) throw new HttpError(400, "Slika nije poslana");
   const ext = detectExtension(buf);
   if (!ext) throw new HttpError(400, "Podrzani formati slike su JPEG, PNG i WebP");
-  const name = `${crypto.randomBytes(16).toString("hex")}.${ext}`;
-  await fs.writeFile(path.join(UPLOAD_DIR, name), buf);
-  return name;
+  const id = crypto.randomBytes(16).toString("hex");
+  await prisma.image.create({ data: { id, mime: FORMATS[ext], data: new Uint8Array(buf), size: buf.length } });
+  return `${id}.${ext}`;
+}
+
+const idOf = (name: string) => name.split(".")[0];
+
+export async function loadImage(name: string) {
+  const id = idOf(name);
+  if (!/^[0-9a-f]{32}$/.test(id)) return null;
+  return prisma.image.findUnique({ where: { id } });
 }
 
 export async function removeImage(name: string | null | undefined) {
-  if (!name || name !== path.basename(name)) return;
-  await fs.rm(path.join(UPLOAD_DIR, name), { force: true });
+  if (!name) return;
+  await prisma.image.deleteMany({ where: { id: idOf(name) } });
 }

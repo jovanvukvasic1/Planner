@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { HttpError, notFound, parseId } from "../errors.js";
-import { IMAGE_TYPES, MAX_IMAGE_BYTES, removeImage, saveImage } from "../uploads.js";
+import { IMAGE_TYPES, MAX_IMAGE_BYTES, removeImage, saveImage } from "../images.js";
 import { STATUSES, pauseTimer, setStatus, startTimer, summarizeWork, workLogSelect } from "../worktime.js";
 
 const router = Router();

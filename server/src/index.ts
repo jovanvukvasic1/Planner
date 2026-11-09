@@ -6,7 +6,8 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { requireAuth } from "./auth.js";
 import { errorHandler } from "./errors.js";
-import { UPLOAD_DIR } from "./uploads.js";
+import { loadImage } from "./images.js";
+import { runMigrations } from "./migrate.js";
 import { rateLimit, securityHeaders } from "./security.js";
 import authRoutes from "./routes/auth.js";
 import folderRoutes from "./routes/folders.js";
@@ -48,16 +49,18 @@ app.use("/api/sessions", requireAuth, sessionRoutes);
 app.use("/api/worklogs", requireAuth, workLogRoutes);
 app.use("/api/stats", requireAuth, statsRoutes);
 
-// Slike aktivnosti. Imena fajlova su nasumicna (128 bita) i mijenjaju se pri svakoj
+// Slike aktivnosti (iz baze). Imena su nasumicna (128 bita) i mijenjaju se pri svakoj
 // zamjeni slike, pa se mogu kesirati bez ogranicenja.
-app.use(
-  "/uploads",
-  express.static(UPLOAD_DIR, {
-    immutable: true,
-    maxAge: "365d",
-    setHeaders: (res) => res.setHeader("X-Content-Type-Options", "nosniff"),
-  })
-);
+app.get("/uploads/:name", async (req, res) => {
+  const image = await loadImage(req.params.name);
+  if (!image) {
+    res.status(404).end();
+    return;
+  }
+  res.setHeader("Content-Type", image.mime);
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.send(Buffer.from(image.data));
+});
 
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "Nepostojeca ruta" });
@@ -76,6 +79,14 @@ if (fs.existsSync(clientDist)) {
 }
 
 app.use(errorHandler);
+
+try {
+  await runMigrations();
+} catch (err) {
+  console.error("GRESKA: ne mogu se povezati s bazom ili primijeniti migracije. Provjeri DATABASE_URL i DATABASE_AUTH_TOKEN.");
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
+}
 
 const server = app.listen(PORT, () => {
   console.log(`Planner server radi na http://localhost:${PORT}`);

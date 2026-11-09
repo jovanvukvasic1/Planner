@@ -1,13 +1,13 @@
-# Postavljanje planera na server (besplatno)
+# Postavljanje planera na vlastiti server (Docker)
 
-Ovo uputstvo podiže planer na **besplatan virtualni server** s **besplatnim domenom** i
+> Najlakši put bez kartice je **[Render + Turso](DEPLOY-RENDER.md)**. Ovo uputstvo je za
+> slučaj kad želiš vlastiti (virtualni) server: tada nema "uspavljivanja" i sve je kod tebe.
+
+Ovo uputstvo podiže planer na **virtualni server** s **besplatnim domenom** i
 **HTTPS-om**, tako da radi i s laptopa i s telefona (kao aplikacija na početnom ekranu).
+Baza (s naslovnim slikama) je SQLite fajl u Docker volumenu.
 
-## Zašto virtualni server, a ne "besplatni hosting"?
-
-Planer čuva bazu (SQLite) i slike na disku. Većina besplatnih hosting servisa (npr. Render
-free) briše disk pri svakom restartu i uspava aplikaciju nakon 15 minuta neaktivnosti, pa bi se
-podaci gubili. Zato koristimo mali virtualni server koji je besplatan trajno:
+## Gdje nabaviti besplatan server
 
 | Opcija | Šta dobiješ | Napomena |
 | --- | --- | --- |
@@ -148,7 +148,7 @@ Promjene baze (migracije) primjenjuju se automatski pri pokretanju; podaci ostaj
 
 ## 8. Backup
 
-Skripta pravi kopiju baze i slika u `backups/planer-DATUM.tar.gz` i čuva zadnjih 14 kopija:
+Skripta pravi kopiju baze (sa slikama) u `backups/planer-DATUM.tar.gz` i čuva zadnjih 14 kopija:
 
 ```bash
 ./deploy/backup.sh
@@ -179,10 +179,6 @@ docker compose stop planner
 
 ```bash
 docker compose cp /tmp/planer-restore/planner.db planner:/app/server/data/planner.db
-```
-
-```bash
-docker compose cp /tmp/planer-restore/uploads/. planner:/app/server/data/uploads
 ```
 
 ```bash

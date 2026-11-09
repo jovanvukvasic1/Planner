@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backup baze i slika u ./backups/planer-DATUM.tar.gz (cuva zadnjih 14 backupa).
+# Backup baze (sadrzi i slike) u ./backups/planer-DATUM.tar.gz (cuva zadnjih 14 backupa).
 # Pokretati iz foldera projekta: ./deploy/backup.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -10,10 +10,9 @@ mkdir -p backups
 
 docker compose exec -T planner node scripts/backup.mjs /app/server/data/backup.db
 docker compose cp planner:/app/server/data/backup.db "$TMP/planner.db"
-docker compose cp planner:/app/server/data/uploads "$TMP/uploads"
 docker compose exec -T planner rm -f /app/server/data/backup.db
 
-tar czf "backups/planer-$STAMP.tar.gz" -C "$TMP" planner.db uploads
+tar czf "backups/planer-$STAMP.tar.gz" -C "$TMP" planner.db
 rm -rf "$TMP"
 echo "Sacuvano: backups/planer-$STAMP.tar.gz"
 
