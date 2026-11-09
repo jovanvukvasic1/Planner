@@ -13,7 +13,7 @@ Lični planer obaveza i aktivnosti. Serverska aplikacija dostupna s telefona i l
 - Mjerenje vremena rada: start, pauza i završetak aktivnosti
 - Naslovna fotografija aktivnosti (automatski se smanjuje prije slanja)
 - Tabla (Za uraditi / U radu / Završeno): prevlačenje u "U radu" pokreće, a u "Završeno" završava rad
-- Statistika
+- Statistika: vrijeme rada (izmjereno i procijenjeno), završene aktivnosti, rokovi, raspodjela po folderima, planirano u odnosu na odrađeno
 
 ## Tehnologije
 
@@ -65,6 +65,7 @@ Sve rute osim `/api/auth/*` i `/api/health` traže header `Authorization: Bearer
 | PATCH / DELETE | `/api/worklogs/:id` | Ispravka / brisanje perioda rada |
 | PUT | `/api/activities/:id/cover` | Naslovna slika (tijelo je slika: `image/jpeg`, `image/png` ili `image/webp`, do 10 MB) |
 | DELETE | `/api/activities/:id/cover` | Uklanjanje naslovne slike |
+| GET | `/api/stats?from=&to=` | Podaci za statistiku u periodu (agregacija se radi u browseru, po lokalnom vremenu) |
 
 ### Vrijeme rada
 

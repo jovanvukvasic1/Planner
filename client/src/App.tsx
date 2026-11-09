@@ -6,20 +6,22 @@ import Login from "./components/Login";
 import ActivitiesPage from "./components/ActivitiesPage";
 import PlannerPage from "./components/planner/PlannerPage";
 import BoardPage from "./components/board/BoardPage";
+import StatsPage from "./components/stats/StatsPage";
 
-type Tab = "planner" | "board" | "activities";
+type Tab = "planner" | "board" | "activities" | "stats";
 const TAB_KEY = "planer_tab";
 
 const TABS: [Tab, string][] = [
   ["planner", "Kalendar"],
   ["board", "Tabla"],
   ["activities", "Aktivnosti"],
+  ["stats", "Statistika"],
 ];
 
 function initialTab(): Tab {
   try {
     const saved = localStorage.getItem(TAB_KEY);
-    return saved === "activities" || saved === "board" ? saved : "planner";
+    return saved === "activities" || saved === "board" || saved === "stats" ? saved : "planner";
   } catch {
     return "planner";
   }
@@ -64,7 +66,15 @@ function Shell() {
           {tab === "planner" && <PlannerPage />}
           {tab === "board" && <BoardPage />}
           {tab === "activities" && <ActivitiesPage />}
+          {tab === "stats" && <StatsPage />}
         </main>
+        <nav className="bottom-tabs">
+          {TABS.map(([t, label]) => (
+            <button key={t} className={`bottom-tab${tab === t ? " active" : ""}`} onClick={() => changeTab(t)}>
+              {label}
+            </button>
+          ))}
+        </nav>
       </div>
     </TimerProvider>
   );

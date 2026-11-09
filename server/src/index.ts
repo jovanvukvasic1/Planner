@@ -12,6 +12,7 @@ import folderRoutes from "./routes/folders.js";
 import activityRoutes from "./routes/activities.js";
 import sessionRoutes from "./routes/sessions.js";
 import workLogRoutes from "./routes/worklogs.js";
+import statsRoutes from "./routes/stats.js";
 
 if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process.env.JWT_SECRET === "promijeni-me")) {
   console.warn("UPOZORENJE: postavi JWT_SECRET na dug, tajan kljuc!");
@@ -32,6 +33,7 @@ app.use("/api/folders", requireAuth, folderRoutes);
 app.use("/api/activities", requireAuth, activityRoutes);
 app.use("/api/sessions", requireAuth, sessionRoutes);
 app.use("/api/worklogs", requireAuth, workLogRoutes);
+app.use("/api/stats", requireAuth, statsRoutes);
 
 // Slike aktivnosti. Imena fajlova su nasumicna (128 bita) i mijenjaju se pri svakoj
 // zamjeni slike, pa se mogu kesirati bez ogranicenja.

@@ -11,6 +11,7 @@ import type {
   User,
   WorkLog,
 } from "./types";
+import type { StatsRaw } from "./stats";
 
 const TOKEN_KEY = "planer_token";
 
@@ -125,6 +126,8 @@ export const api = {
       request<Session>("PATCH", `/sessions/${id}`, data),
     remove: (id: number) => request<void>("DELETE", `/sessions/${id}`),
   },
+  stats: (from: Date, to: Date) =>
+    request<StatsRaw>("GET", `/stats?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
   worklogs: {
     current: () => request<RunningTimer | null>("GET", "/worklogs/current"),
     create: (data: { activityId: number; start: string; end: string }) => request<WorkLog>("POST", "/worklogs", data),
